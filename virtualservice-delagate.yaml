@@ -1,0 +1,97 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+
+# Gateway`资源指定网关应选择具有标签`istio: ingressgateway`的Pod。 
+#`servers`字段指定网关的网络配置。在此特定的YAML代码中，使用`servers`字段来定义单个服务器，该服务器侦听端口80上的HTTP流量，并指定该服务器应接受任何主机名的流量。
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: bookinfo
+  namespace: default
+spec:
+  gateways:
+    - bookinfo-gateway
+  hosts:
+    - '*'
+  http:
+    - delegate:
+        name: vs-1
+        namespace: ns1
+      match:
+        - uri:
+            prefix: /log
+    - delegate:
+        name: vs-2
+        namespace: ns1
+      match:
+        - uri:
+            prefix: /
+# 指定VirtualService应使用“bookinfo-gateway”网关并接受任何主机名的流量。
+#“http”字段指定VirtualService应接受HTTP流量并定义两个路由规则。
+# 第一条规则将请求URI前缀为“/log”的流量委派给命名空间为“ns1”的另一个名为“vs-1”的VirtualService。
+# 第二条规则将所有其他请求委派给命名空间为“ns1”的另一个名为“vs-2”的VirtualService。
+
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vs-1
+  namespace: ns1
+spec:
+  http:
+    - match:
+        - uri:
+            exact: /login
+        - uri:
+            exact: /logout
+      route:
+        - destination:
+            host: productpage.default.svc.cluster.local
+            port:
+              number: 9080
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vs-2
+  namespace: ns1
+spec:
+  http:
+    - match:
+        - uri:
+            exact: /productpage
+        - uri:
+            prefix: /static
+        - uri:
+            prefix: /api/v1/products
+      route:
+        - destination:
+            host: productpage.default.svc.cluster.local
+            port:
+              number: 9080
+
+# 两个VirtualService资源定义了两个路由规则，这些规则将流量路由到productpage服务的不同部分。
+# 第一个路由规则将请求URI为“/login”或“/logout”的流量路由到productpage服务的9080端口。
+# 第二个路由规则将请求URI为“/productpage”、“/static”或“/api/v1/products”的流量路由到productpage服务的9080端口。
+# 请注意，这些路由规则不会匹配请求URI为“/log”的流量，因此不会将流量路由到productpage服务。
+
+# 流量进入istio后，通过gateway监听来自任何主机上的80端口的http流量，其中selector指定了所使用的service，即istio-ingressgateway。
+# 流量通过book-info的virtualservice监听来自任何主机的流量，当uri请求为/log时，流量将被委托给ns1中的vs-1virtualservice，当uri请求为/时，流量将被委托给ns1中是vs-2的virtualservice。
+# 流量进入ns1中的vs-1，如果匹配到/login或者/logout的uri请求，流量将被路由到productpage服务的9080端口。
+# 流量进入ns1中的vs-2，如果匹配到/productpage或者/static或者/api/v1/products的uri请求，流量将被路由到productpage服务的9080端口。
+```
