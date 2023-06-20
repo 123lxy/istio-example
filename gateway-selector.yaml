@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: my-gateway
+spec:
+  selector:
+    app: my-app
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "example.com"
+    - "www.example.com"
+# Gateway资源中的“selector”字段指定了Gateway将路由流量到哪些servic上。在这种情况下，选择器设置为“app: my-app”，这意味着Gateway将路由流量到所有标签为“app=my-app”的service
+
+# Gateway资源中的“servers”字段指定了Gateway将侦听哪些服务器。在本例中，仅定义了一个服务器，它侦听端口80，并命名为“http”。此服务器的协议是HTTP。
+
+# Gateway资源中的"hosts"字段指定了 Gateway 将接受哪些主机的流量。在本例中， Gateway 将接受 "example.com" 和 "www.example.com" 的流量
+---
