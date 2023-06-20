@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: my-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "example.com"
+    - "www.example.com"
+    tls:
+      mode: PASSTHROUGH
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - "example.com"
+    - "www.example.com"
+    tls:
+      mode: SIMPLE
+      credentialName: my-certificate
+
+# 总体而言，此 Gateway 资源定义了一种流量进入 Istio 服务网格并路由到标签为“istio=ingressgateway”的 Pod 的方式。
+# Gateway 将侦听端口80和443以接受 HTTP 流量和 HTTPS 流量，并接受来自 "example.com" 和 "www.example.com" 的主机流量。TLS 设置被配置为通过 TLS 连接或在 Gateway 上终止它。

@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: forecast
+  namespace: weather
+spec:
+  host: forecast
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnection 80
+    portLevelSettings:
+    - port: 
+        number: 3002
+      connectionPool:
+        tcp: 
+          maxConnection: 100
